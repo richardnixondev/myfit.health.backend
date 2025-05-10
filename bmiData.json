@@ -442,19 +442,6 @@
     "createdAt": "2025-05-10T13:09:03.429Z"
   },
   {
-    "id": 1746882543438,
-    "name": "David Edwards",
-    "age": 73,
-    "weight": 94,
-    "height": 170,
-    "gender": "male",
-    "activityLevel": "sedentary",
-    "activityDescription": "Little or no exercise",
-    "bmiValue": "32.53",
-    "bmiCategory": "Obesity",
-    "createdAt": "2025-05-10T13:09:03.438Z"
-  },
-  {
     "id": 1746882543447,
     "name": "Chloe Collins",
     "age": 14,
@@ -484,14 +471,15 @@
     "id": 1746882676806,
     "name": "Logan Ramirez",
     "age": 16,
-    "weight": 68,
+    "weight": 78,
     "height": 174,
     "gender": "male",
-    "activityLevel": "light",
-    "activityDescription": "Light exercise 1-3 days/week",
-    "bmiValue": "22.46",
-    "bmiCategory": "Normal weight",
-    "createdAt": "2025-05-10T13:11:16.806Z"
+    "activityLevel": "moderate",
+    "activityDescription": "Moderate exercise 3-5 days/week",
+    "bmiValue": "25.76",
+    "bmiCategory": "Overweight",
+    "createdAt": "2025-05-10T13:11:16.806Z",
+    "updatedAt": "2025-05-10T14:00:13.908Z"
   },
   {
     "id": 1746882694516,

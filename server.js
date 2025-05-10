@@ -160,6 +160,89 @@ app.get('/bmi/:id', (req, res) => {
   }
 });
 
+/**
+ * PUT /bmi/:id - Update a BMI record
+ */
+app.put('/bmi/:id', (req, res) => {
+  try {
+    const { name, age, weight, height, gender, activityLevel } = req.body;
+    const records = readData();
+    const recordIndex = records.findIndex(r => r.id === parseInt(req.params.id));
+    
+    if (recordIndex === -1) {
+      return res.status(404).json({ error: 'Record not found' });
+    }
+
+    // keep same values if it's not chance.
+    const updatedRecord = {
+      ...records[recordIndex],
+      name: name || records[recordIndex].name,
+      age: age || records[recordIndex].age,
+      weight: weight || records[recordIndex].weight,
+      height: height || records[recordIndex].height,
+      gender: gender || records[recordIndex].gender,
+      activityLevel: activityLevel || records[recordIndex].activityLevel,
+      updatedAt: new Date().toISOString()
+    };
+
+    // redo BMi if needs
+    if (weight || height) {
+      updatedRecord.bmiValue = calculateBMI(
+        weight || records[recordIndex].weight,
+        height || records[recordIndex].height
+      );
+      updatedRecord.bmiCategory = getBMICategory(updatedRecord.bmiValue);
+    }
+
+    if (activityLevel) {
+      updatedRecord.activityDescription = getActivityDescription(activityLevel);
+    }
+
+    records[recordIndex] = updatedRecord;
+    writeData(records);
+
+    res.json({
+      message: 'Record updated successfully',
+      record: updatedRecord
+    });
+  } catch (error) {
+    console.error('Error updating record:', error);
+    res.status(500).json({ error: 'Failed to update record' });
+  }
+});
+
+
+/**
+ * DELETE /bmi/:id - Delete a BMI record
+ */
+app.delete('/bmi/:id', (req, res) => {
+  try {
+    const records = readData();
+    const initialLength = records.length;
+    
+    // Filter out the record with matching ID
+    const updatedRecords = records.filter(r => r.id !== parseInt(req.params.id));
+    
+    // If no record was deleted
+    if (updatedRecords.length === initialLength) {
+      return res.status(404).json({ error: 'Record not found' });
+    }
+    
+    // Save the updated records
+    writeData(updatedRecords);
+    
+    res.json({ 
+      message: 'Record deleted successfully',
+      deletedId: parseInt(req.params.id)
+    });
+  } catch (error) {
+    console.error('Error deleting record:', error);
+    res.status(500).json({ error: 'Failed to delete record' });
+  }
+});
+
+
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`BMI API running at http://localhost:${PORT}`);
