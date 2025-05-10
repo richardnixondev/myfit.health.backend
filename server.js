@@ -1,39 +1,167 @@
 const express = require('express');
-//onst mongoose = require('mongoose');
-const app = express();
-const { port } = require('./config/serverConfig');
+const fs = require('fs');
+const path = require('path');
 
-// Middlewares
+// Create Express app
+const app = express();
+const PORT = 3000;
+
+// Path to our data file (now in root)
+const DATA_FILE = path.join(__dirname, 'bmiData.json');
+
+// Middleware to parse JSON requests
 app.use(express.json());
 
-// MongoDB Connect
-// mongoose.connect(mongoURI, {
- // useNewUrlParser: true,
- // useUnifiedTopology: true
-// })
-// .then(() => console.log('Connected to MongoDB'))
-// .catch(err => console.error('MongoDB connection error:', err));
+// Initialize data file if it doesn't exist
+if (!fs.existsSync(DATA_FILE)) {
+  fs.writeFileSync(DATA_FILE, '[]', 'utf-8');
+}
 
-// Import routes
-const bmiRoutes = require('./routes/bmi.routes');
+/**
+ * Helper function to read BMI data from file
+ */
+function readData() {
+  try {
+    const rawData = fs.readFileSync(DATA_FILE, 'utf-8');
+    return JSON.parse(rawData);
+  } catch (error) {
+    console.error('Error reading data file:', error);
+    return [];
+  }
+}
 
-// Setup routes
-app.use('/api/bmi', bmiRoutes);
+/**
+ * Helper function to write BMI data to file
+ */
+function writeData(data) {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Error writing data file:', error);
+  }
+}
 
-// routes health check
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'UP' });
+/**
+ * Calculate BMI based on weight (kg) and height (cm)
+ */
+function calculateBMI(weight, height) {
+  const heightMeters = height / 100;
+  return (weight / (heightMeters * heightMeters)).toFixed(2);
+}
+
+/**
+ * Determine BMI category based on BMI value
+ */
+function getBMICategory(bmi) {
+  const bmiNum = parseFloat(bmi);
+  if (bmiNum < 18.5) return 'Underweight';
+  if (bmiNum < 25) return 'Normal weight';
+  if (bmiNum < 30) return 'Overweight';
+  return 'Obesity';
+}
+
+/**
+ * Determine activity level description
+ */
+function getActivityDescription(level) {
+  const levels = {
+    sedentary: 'Little or no exercise',
+    light: 'Light exercise 1-3 days/week',
+    moderate: 'Moderate exercise 3-5 days/week',
+    active: 'Hard exercise 6-7 days/week',
+    extreme: 'Very hard exercise and physical job'
+  };
+  return levels[level.toLowerCase()] || 'Unknown activity level';
+}
+
+// Routes
+
+/**
+ * POST /bmi - Create a new BMI record
+ */
+app.post('/bmi', (req, res) => {
+  try {
+    const { name, age, weight, height, gender, activityLevel } = req.body;
+    
+    // Basic validation
+    if (!name || !age || !weight || !height || !gender || !activityLevel) {
+      return res.status(400).json({ 
+        error: 'Missing fields. Please provide: name, age, weight, height, gender, activityLevel' 
+      });
+    }
+
+    // Calculate values
+    const bmiValue = calculateBMI(weight, height);
+    const bmiCategory = getBMICategory(bmiValue);
+    const activityDescription = getActivityDescription(activityLevel);
+
+    // Create new record
+    const newRecord = {
+      id: Date.now(), // Simple ID generation
+      name,
+      age: parseInt(age),
+      weight: parseFloat(weight),
+      height: parseFloat(height),
+      gender,
+      activityLevel,
+      activityDescription,
+      bmiValue,
+      bmiCategory,
+      createdAt: new Date().toISOString()
+    };
+
+    // Save to file
+    const records = readData();
+    records.push(newRecord);
+    writeData(records);
+
+    res.status(201).json({
+      message: 'BMI record created successfully',
+      record: newRecord
+    });
+  } catch (error) {
+    console.error('Error creating record:', error);
+    res.status(500).json({ error: 'Failed to create BMI record' });
+  }
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+/**
+ * GET /bmi - Get all BMI records
+ */
+app.get('/bmi', (req, res) => {
+  try {
+    const records = readData();
+    res.json({
+      count: records.length,
+      records
+    });
+  } catch (error) {
+    console.error('Error reading records:', error);
+    res.status(500).json({ error: 'Failed to retrieve BMI records' });
+  }
 });
 
-// Start Server
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+/**
+ * GET /bmi/:id - Get a specific BMI record
+ */
+app.get('/bmi/:id', (req, res) => {
+  try {
+    const records = readData();
+    const record = records.find(r => r.id === parseInt(req.params.id));
+    
+    if (!record) {
+      return res.status(404).json({ error: 'BMI record not found' });
+    }
+    
+    res.json(record);
+  } catch (error) {
+    console.error('Error finding record:', error);
+    res.status(500).json({ error: 'Failed to retrieve BMI record' });
+  }
 });
 
-module.exports = app; 
+// Start the server
+app.listen(PORT, () => {
+  console.log(`BMI API running at http://localhost:${PORT}`);
+  console.log(`Data file location: ${DATA_FILE}`);
+});
