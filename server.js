@@ -1,18 +1,18 @@
 const express = require('express');
-const mongoose = require('mongoose');
+//onst mongoose = require('mongoose');
 const app = express();
-const { port, mongoURI } = require('./config/serverConfig');
+const { port } = require('./config/serverConfig');
 
 // Middlewares
 app.use(express.json());
 
 // MongoDB Connect
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+// mongoose.connect(mongoURI, {
+ // useNewUrlParser: true,
+ // useUnifiedTopology: true
+// })
+// .then(() => console.log('Connected to MongoDB'))
+// .catch(err => console.error('MongoDB connection error:', err));
 
 // Import routes
 const bmiRoutes = require('./routes/bmi.routes');
