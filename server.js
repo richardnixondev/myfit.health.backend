@@ -1,6 +1,8 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const cors = require('cors');
+
 
 // Create Express app
 const app = express();
@@ -8,6 +10,27 @@ const PORT = 3000;
 
 // Path to our data file (now in root)
 const DATA_FILE = path.join(__dirname, 'bmiData.json');
+
+
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://www.myfit.health'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
+
+
+
 
 // Middleware to parse JSON requests
 app.use(express.json());
