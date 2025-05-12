@@ -14,8 +14,8 @@ const DATA_FILE = path.join(__dirname, 'bmiData.json');
 
 
 const allowedOrigins = [
-  'http://localhost:5173',
-  'https://www.myfit.health'
+  'https://www.myfit.health',
+  'https://myfit.health'
 ];
 
 app.use(cors({
